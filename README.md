@@ -18,6 +18,7 @@ The rotation system uses ISO week numbers to deterministically assign team membe
 - **Multiple Tasks**: Support for multiple tasks with different staff rotations
 - **Multi-Channel Notifications**: Email and Slack notifications
 - **GitHub Integration**: Automatic issue creation and assignment
+- **Calendar View**: Generate Markdown tables showing task assignments for any month
 - **Manual Triggering**: Can be triggered manually for testing or special cases
 - **Dry-Run Mode**: Test the system without sending notifications
 
@@ -189,6 +190,32 @@ To test assignments for a specific week:
 ```bash
 python scripts/rotation-manager.py --dry-run --week 15
 ```
+
+### Generating a Calendar View
+
+To generate a calendar view showing task assignments for a specific month:
+
+```bash
+python scripts/rotation-manager.py --calendar --month 2 --year 2026
+```
+
+This will output a Markdown table showing who is assigned to each task for every week that overlaps with the specified month. For example:
+
+```markdown
+# Rotation Calendar: February 2026
+
+| Week | DevOps Duty |
+|------|---------|
+| Week 5 | fede |
+| Week 6 | federico |
+| Week 7 | fede |
+| Week 8 | federico |
+```
+
+The calendar feature is useful for:
+- Planning ahead and viewing upcoming rotations
+- Checking historical assignments for a specific month
+- Generating reports or documentation of task assignments
 
 ### Validating Configuration
 
