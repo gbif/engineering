@@ -13,6 +13,7 @@ import argparse
 import yaml
 import json
 import smtplib
+import calendar
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -429,6 +430,95 @@ def send_slack_notification(config, current_week, next_week, current_assignments
         print(f"Error sending Slack notification: {e}")
 
 
+def get_weeks_in_month(year, month):
+    """
+    Get all ISO week numbers that overlap with the given month.
+    
+    Args:
+        year: Year (e.g., 2026)
+        month: Month (1-12)
+    
+    Returns:
+        List of tuples: [(week_number, iso_year), ...]
+    """
+    # Get first and last day of the month
+    first_day = datetime(year, month, 1)
+    last_day_num = calendar.monthrange(year, month)[1]
+    last_day = datetime(year, month, last_day_num)
+    
+    weeks = []
+    current = first_day
+    
+    # Collect all weeks that overlap with this month
+    while current <= last_day:
+        iso_cal = current.isocalendar()
+        week_num = iso_cal[1]
+        iso_year = iso_cal[0]
+        
+        # Add week if not already in list
+        week_tuple = (week_num, iso_year)
+        if week_tuple not in weeks:
+            weeks.append(week_tuple)
+        
+        # Move to next week
+        current += timedelta(weeks=1)
+    
+    return weeks
+
+
+def generate_calendar_markdown(config, year, month):
+    """
+    Generate a Markdown table showing task assignments for all weeks in a month.
+    
+    Args:
+        config: Configuration dictionary
+        year: Year (e.g., 2026)
+        month: Month (1-12)
+    
+    Returns:
+        Markdown formatted string
+    """
+    month_name = calendar.month_name[month]
+    weeks = get_weeks_in_month(year, month)
+    tasks = config.get('tasks', [])
+    
+    if not tasks:
+        return "No tasks configured."
+    
+    # Build header
+    output = f"# Rotation Calendar: {month_name} {year}\n\n"
+    
+    # Create table header
+    header = "| Week |"
+    separator = "|------|"
+    
+    for task in tasks:
+        task_name = task.get('name', 'Unknown')
+        header += f" {task_name} |"
+        separator += "---------|"
+    
+    output += header + "\n"
+    output += separator + "\n"
+    
+    # Create rows for each week
+    for week_num, iso_year in weeks:
+        # Format week display
+        week_display = f"Week {week_num}"
+        if iso_year != year:
+            week_display += f" ({iso_year})"
+        
+        row = f"| {week_display} |"
+        
+        for task in tasks:
+            staff = task.get('staff', [])
+            assigned = calculate_assignment(week_num, staff)
+            row += f" {assigned or 'Unassigned'} |"
+        
+        output += row + "\n"
+    
+    return output
+
+
 def validate_config(config):
     """
     Validate the configuration file.
@@ -490,6 +580,12 @@ def main():
                         help='Only validate configuration and exit')
     parser.add_argument('--week', type=int,
                         help='Specify week number (for testing)')
+    parser.add_argument('--calendar', action='store_true',
+                        help='Generate a calendar view of assignments for a month')
+    parser.add_argument('--month', type=int,
+                        help='Month (1-12) for calendar view')
+    parser.add_argument('--year', type=int,
+                        help='Year (4 digits) for calendar view')
     
     args = parser.parse_args()
     
@@ -514,6 +610,26 @@ def main():
     
     if args.validate_only:
         print("Validation complete. Exiting.")
+        sys.exit(0)
+    
+    # Handle calendar mode
+    if args.calendar:
+        # Validate calendar arguments
+        if args.month is None or args.year is None:
+            print("Error: --calendar requires both --month and --year")
+            sys.exit(1)
+        
+        if args.month < 1 or args.month > 12:
+            print("Error: --month must be between 1 and 12")
+            sys.exit(1)
+        
+        if args.year < 1000 or args.year > 9999:
+            print("Error: --year must be a 4-digit year")
+            sys.exit(1)
+        
+        # Generate and display calendar
+        markdown = generate_calendar_markdown(config, args.year, args.month)
+        print(markdown)
         sys.exit(0)
     
     # Calculate week numbers
