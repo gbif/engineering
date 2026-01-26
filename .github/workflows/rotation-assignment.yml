@@ -24,7 +24,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-    
+      pull-requests: write  # Add this line for broader permissions
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
