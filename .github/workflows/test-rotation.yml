@@ -1,0 +1,58 @@
+name: Test Rotation System
+
+on:
+  workflow_dispatch:
+    inputs:
+      week_number:
+        description: 'Week number to test (1-53)'
+        required: true
+        type: number
+        default: 1
+
+jobs:
+  test-rotation:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Validate configuration
+        run: |
+          python scripts/rotation-manager.py --validate-only
+      
+      - name: Test rotation for week ${{ github.event.inputs.week_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Testing rotation assignment for week ${{ github.event.inputs.week_number }}"
+          python scripts/rotation-manager.py --dry-run --week ${{ github.event.inputs.week_number }}
+      
+      - name: Test rotation for next few weeks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ""
+          echo "Testing next 4 weeks of rotations:"
+          echo "=================================="
+          for i in {1..4}; do
+            week=$((${{ github.event.inputs.week_number }} + $i))
+            if [ $week -gt 53 ]; then
+              week=$((week - 53))
+            fi
+            echo ""
+            echo "Week $week:"
+            python scripts/rotation-manager.py --dry-run --week $week | grep -A 10 "Current Week Assignments:"
+          done
