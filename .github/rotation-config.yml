@@ -2,33 +2,11 @@ tasks:
   - name: "DevOps Duty"
     description: "Monitor production systems, respond to incidents, and handle deployment requests"
     staff:
-      - alice-dev
-      - bob-engineer
-      - charlie-ops
+      - fede
+      - federico
     email_addresses:
-      - alice@example.com
-      - bob@example.com
-      - charlie@example.com
-  
-  - name: "Code Review Champion"
-    description: "Ensure timely code reviews and maintain review quality standards"
-    staff:
-      - david-senior
-      - eve-reviewer
-      - frank-lead
-    email_addresses:
-      - david@example.com
-      - eve@example.com
-      - frank@example.com
-
-  - name: "Documentation Maintainer"
-    description: "Keep documentation up-to-date and review documentation PRs"
-    staff:
-      - grace-writer
-      - henry-docs
-    email_addresses:
-      - grace@example.com
-      - henry@example.com
+      - fmeendez@gbif.org
+      - federicomh@gmail.com
 
 notifications:
   slack_channel: "#engineering"
