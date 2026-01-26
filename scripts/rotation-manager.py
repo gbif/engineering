@@ -215,6 +215,14 @@ def send_email_notification(config, current_week, next_week, current_assignments
     smtp_password = os.environ.get('SMTP_PASSWORD')
     smtp_from = os.environ.get('SMTP_FROM_EMAIL')
     
+    # Add debug output
+    print(f"Debug - SMTP config check:")
+    print(f"  SMTP_HOST: {'SET' if smtp_host else 'NOT SET'}")
+    print(f"  SMTP_PORT: {'SET' if smtp_port else 'NOT SET'}")
+    print(f"  SMTP_USERNAME: {'SET' if smtp_username else 'NOT SET'}")
+    print(f"  SMTP_PASSWORD: {'SET' if smtp_password else 'NOT SET'}")
+    print(f"  SMTP_FROM_EMAIL: {'SET' if smtp_from else 'NOT SET'}")
+    
     if not all([smtp_host, smtp_port, smtp_username, smtp_password, smtp_from]):
         print("Warning: SMTP configuration not complete, skipping email notifications")
         return
@@ -327,6 +335,10 @@ def send_slack_notification(config, current_week, next_week, current_assignments
         dry_run: If True, don't actually send Slack message
     """
     webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
+    
+    # Add debug output
+    print(f"Debug - Slack config check:")
+    print(f"  SLACK_WEBHOOK_URL: {'SET' if webhook_url else 'NOT SET'}")
     
     if not webhook_url:
         print("Warning: SLACK_WEBHOOK_URL not set, skipping Slack notification")

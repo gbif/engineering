@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: read
+      contents: write
       issues: write
       pull-requests: write  # Add this line for broader permissions
     steps:
@@ -42,6 +42,24 @@ jobs:
         run: |
           python scripts/rotation-manager.py --validate-only
       
+      - name: Debug environment variables
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "Checking environment variables (not showing values for security):"
+          echo "SMTP_HOST is set: $([[ -n "$SMTP_HOST" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_PORT is set: $([[ -n "$SMTP_PORT" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_USERNAME is set: $([[ -n "$SMTP_USERNAME" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_PASSWORD is set: $([[ -n "$SMTP_PASSWORD" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_FROM_EMAIL is set: $([[ -n "$SMTP_FROM_EMAIL" ]] && echo 'YES' || echo 'NO')"
+          echo "SLACK_WEBHOOK_URL is set: $([[ -n "$SLACK_WEBHOOK_URL" ]] && echo 'YES' || echo 'NO')"
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
       - name: Run rotation assignment (dry-run)
         if: github.event.inputs.dry_run == 'true'
         env:
@@ -58,6 +76,24 @@ jobs:
           else
             python scripts/rotation-manager.py --dry-run
           fi
+      
+      - name: Debug environment variables
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          echo "Checking environment variables (not showing values for security):"
+          echo "SMTP_HOST is set: $([[ -n "$SMTP_HOST" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_PORT is set: $([[ -n "$SMTP_PORT" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_USERNAME is set: $([[ -n "$SMTP_USERNAME" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_PASSWORD is set: $([[ -n "$SMTP_PASSWORD" ]] && echo 'YES' || echo 'NO')"
+          echo "SMTP_FROM_EMAIL is set: $([[ -n "$SMTP_FROM_EMAIL" ]] && echo 'YES' || echo 'NO')"
+          echo "SLACK_WEBHOOK_URL is set: $([[ -n "$SLACK_WEBHOOK_URL" ]] && echo 'YES' || echo 'NO')"
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Run rotation assignment (production)
         if: github.event.inputs.dry_run != 'true'
