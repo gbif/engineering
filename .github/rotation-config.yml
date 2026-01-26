@@ -5,7 +5,7 @@ tasks:
       - fede
       - federico
     email_addresses:
-      - fmeendez@gbif.org
+      - fmendez@gbif.org
       - federicomh@gmail.com
 
 notifications:
