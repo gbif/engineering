@@ -105,9 +105,10 @@ def generate_github_issue_body(config, current_week, next_week, current_assignme
     
     for assignment in current_assignments:
         task_name = assignment['task_name']
-        assigned_to = assignment['assigned_to'] or 'Unassigned'
+        assigned_to = assignment['assigned_to']
+        assigned_display = f"@{assigned_to}" if assigned_to else "Unassigned"
         description = assignment['task_description']
-        body += f"| {task_name} | @{assigned_to} | {description} |\n"
+        body += f"| {task_name} | {assigned_display} | {description} |\n"
     
     body += f"\n## Next Week (Week {next_week}) Preview\n\n"
     body += "| Task | Will Be Assigned To |\n"
@@ -115,8 +116,9 @@ def generate_github_issue_body(config, current_week, next_week, current_assignme
     
     for assignment in next_assignments:
         task_name = assignment['task_name']
-        assigned_to = assignment['assigned_to'] or 'Unassigned'
-        body += f"| {task_name} | @{assigned_to} |\n"
+        assigned_to = assignment['assigned_to']
+        assigned_display = f"@{assigned_to}" if assigned_to else "Unassigned"
+        body += f"| {task_name} | {assigned_display} |\n"
     
     body += "\n---\n"
     body += f"*Automated rotation system - Week {current_week} of {current_year}*\n"
@@ -165,7 +167,8 @@ def create_github_issue(config, current_week, next_week, current_assignments, ne
         # Get or create the 'rotation' label
         try:
             label = repo.get_label("rotation")
-        except:
+        except Exception:
+            # Label doesn't exist, create it
             label = repo.create_label("rotation", "4A90E2", "Rotating responsibilities tracking")
         
         # Close previous rotation issues
@@ -455,11 +458,12 @@ def validate_config(config):
             return False, f"Task {i} ({task.get('name')}) must have at least one staff member"
         
         email_addresses = task.get('email_addresses', [])
-        if not isinstance(email_addresses, list):
-            return False, f"Task {i} ({task.get('name')}) 'email_addresses' must be a list"
+        if email_addresses and not isinstance(email_addresses, list):
+            return False, f"Task {i} ({task.get('name')}) 'email_addresses' must be a list if provided"
         
-        if len(email_addresses) != len(staff):
-            return False, f"Task {i} ({task.get('name')}) must have same number of email_addresses as staff members"
+        # Allow optional email addresses, but if provided, must match staff count
+        if email_addresses and len(email_addresses) != len(staff):
+            print(f"Warning: Task '{task.get('name')}' has {len(staff)} staff but {len(email_addresses)} email addresses")
     
     return True, None
 
@@ -503,13 +507,16 @@ def main():
     # Calculate week numbers
     if args.week:
         current_week = args.week
+        # For manual week specification, use simple rollover
+        next_week = current_week + 1
+        if next_week > 53:
+            next_week = 1
     else:
-        current_week = get_iso_week()
-    
-    next_week = current_week + 1
-    # Handle year rollover (assuming max 53 weeks)
-    if next_week > 53:
-        next_week = 1
+        # For automatic mode, use actual date arithmetic
+        current_date = datetime.now()
+        current_week = get_iso_week(current_date)
+        next_date = current_date + timedelta(weeks=1)
+        next_week = get_iso_week(next_date)
     
     current_year = get_iso_year()
     
