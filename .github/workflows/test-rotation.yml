@@ -54,5 +54,5 @@ jobs:
             fi
             echo ""
             echo "Week $week:"
-            python scripts/rotation-manager.py --dry-run --week $week | grep -A 10 "Current Week Assignments:"
+            python scripts/rotation-manager.py --week $week | grep -A 10 "Current Week Assignments:"
           done
