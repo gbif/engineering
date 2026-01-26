@@ -1,0 +1,77 @@
+name: Rotation Assignment
+
+on:
+  schedule:
+    # Run every Friday at 1:00 PM UTC (13:00)
+    - cron: '0 13 * * 5'
+  
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no notifications sent)'
+        required: false
+        type: boolean
+        default: false
+      week_number:
+        description: 'Specify week number (leave empty for current week)'
+        required: false
+        type: string
+
+jobs:
+  assign-rotations:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Validate configuration
+        run: |
+          python scripts/rotation-manager.py --validate-only
+      
+      - name: Run rotation assignment (dry-run)
+        if: github.event.inputs.dry_run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "${{ github.event.inputs.week_number }}" ]; then
+            python scripts/rotation-manager.py --dry-run --week ${{ github.event.inputs.week_number }}
+          else
+            python scripts/rotation-manager.py --dry-run
+          fi
+      
+      - name: Run rotation assignment (production)
+        if: github.event.inputs.dry_run != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "${{ github.event.inputs.week_number }}" ]; then
+            python scripts/rotation-manager.py --week ${{ github.event.inputs.week_number }}
+          else
+            python scripts/rotation-manager.py
+          fi
