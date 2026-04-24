@@ -1,12 +1,9 @@
-# .github/workflows/commit-check.yml
 name: Commit Message Check
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
-      - master
-      - dev
+      - "**"  # all branches
 
 jobs:
   check-commits:
@@ -15,18 +12,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # needed to access full commit history
+          fetch-depth: 0
 
       - name: Check commit messages
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           MIN_LENGTH=20
           ISSUE_PATTERN="(#[0-9]+|https://github.com/.*/issues/[0-9]+)"
           FAILED=0
 
-          COMMITS=$(git log ${BASE_SHA}..${HEAD_SHA} --format="%H")
+          # On push, github provides before/after SHAs
+          BASE_SHA="${{ github.event.before }}"
+          HEAD_SHA="${{ github.event.after }}"
+
+          # Handle first push to a new branch (before SHA is all zeros)
+          if [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            COMMITS=$(git log ${HEAD_SHA} -1 --format="%H")
+          else
+            COMMITS=$(git log ${BASE_SHA}..${HEAD_SHA} --format="%H")
+          fi
 
           if [ -z "$COMMITS" ]; then
             echo "No commits to check"
@@ -46,7 +49,7 @@ jobs:
               continue
             fi
 
-            # Check minimum length (first line)
+            # Check minimum length
             if [ ${#SHORT} -lt $MIN_LENGTH ]; then
               echo "❌ Too short: ${#SHORT} chars (min $MIN_LENGTH)"
               FAILED=1
@@ -54,7 +57,7 @@ jobs:
               echo "✅ Length OK: ${#SHORT} chars"
             fi
 
-            # Check issue reference (anywhere in message)
+            # Check issue reference
             if ! echo "$MSG" | grep -qE "$ISSUE_PATTERN"; then
               echo "❌ No issue reference found (expected #123)"
               FAILED=1
