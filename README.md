@@ -348,6 +348,26 @@ Test specific week assignments:
 python scripts/rotation-manager.py --dry-run --week 10
 ```
 
+Validate WS versions by environment policy:
+```bash
+export GITHUB_TOKEN="<token-with-repo-read-access>"
+python scripts/ws-services-monitoring-github.py \
+  --github-owner gbif \
+  --github-repo engineering
+```
+
+Validate using files from a private GitHub repository:
+```bash
+export GITHUB_TOKEN="<token-with-repo-read-access>"
+python scripts/ws-services-monitoring-github.py \
+  --github-owner gbif \
+  --github-repo engineering \
+  --github-ref main \
+  --config-path-template cli/{env}/config.sh \
+  --envs dev,test,prod \
+  --policy-file scripts/policy.json
+```
+
 ## Architecture
 
 ### Components

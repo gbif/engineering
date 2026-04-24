@@ -1,0 +1,14 @@
+{
+  "prod": {
+    "allowed_types": ["latest", "specific"],
+    "allowed_versions": []
+  },
+  "test": {
+    "allowed_types": ["latest", "specific"],
+    "allowed_versions": []
+  },
+  "dev": {
+    "allowed_types": ["latest", "specific", "snapshot", "unknown"],
+    "allowed_versions": []
+  }
+}
