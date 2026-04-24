@@ -1,9 +1,10 @@
 name: Commit Message Check
+
 on:
   push:
     branches:
       - "**"  # all branches
-      -
+
 jobs:
   check-commits:
     runs-on: ubuntu-latest
