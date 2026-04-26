@@ -10,5 +10,9 @@
   "dev": {
     "allowed_types": ["latest", "specific", "snapshot", "unknown"],
     "allowed_versions": []
+  },
+  "lab": {
+    "allowed_types": ["latest", "specific", "snapshot", "unknown"],
+    "allowed_versions": []
   }
 }
