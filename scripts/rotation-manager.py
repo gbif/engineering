@@ -20,6 +20,7 @@ from email.mime.multipart import MIMEMultipart
 import requests
 from github import Github
 
+
 def get_iso_week(date=None):
     """Get ISO week number for a given date (or current date)."""
     if date is None:
