@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "**"  # all branches
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
   check-commits:
@@ -17,6 +20,12 @@ jobs:
       - name: Check commit messages
         run: |
           chmod +x scripts/check-commit-messages.sh
-          scripts/check-commit-messages.sh \
-            --base-sha "${{ github.event.before }}" \
-            --head-sha "${{ github.event.after }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            scripts/check-commit-messages.sh \
+              --base-sha "${{ github.event.pull_request.base.sha }}" \
+              --head-sha "${{ github.event.pull_request.head.sha }}"
+          else
+            scripts/check-commit-messages.sh \
+              --base-sha "${{ github.event.before }}" \
+              --head-sha "${{ github.event.after }}"
+          fi
