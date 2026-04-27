@@ -451,3 +451,57 @@ For issues or questions:
 1. Check the Troubleshooting section above
 2. Review the GitHub Actions logs for error messages
 3. Open an issue in the repository with details about your problem
+
+## Jenkins Scheduled Monitoring
+
+Use `Jenkinsfile` at the repository root to run policy/monitoring checks on a schedule from Jenkins.
+
+### What It Runs
+
+- `scripts/ws-services-monitoring-github.py` (validates `cli/{env}/config.sh` from a GitHub repo against local policy)
+- `scripts/ws-services-monitoring.py` (validates versions from `<admin-url>/instances`)
+- `scripts/run-monitoring-checks.sh` (wrapper that runs checks, writes logs, and exits non-zero on failure)
+
+### Jenkins Prerequisites
+
+- Jenkins agent with `python3` available
+- Jenkins credential (Secret Text) containing a GitHub token with repo read access
+- Credential ID (default in pipeline parameters): `github-token`
+
+### Create the Jenkins Job
+
+1. Create a **Pipeline** job in Jenkins.
+2. Configure **Pipeline script from SCM** to this repository.
+3. Set script path to `Jenkinsfile`.
+4. Save and run.
+
+The pipeline has a default cron trigger (`H 5 * * *`) and parameters for mode, envs, refs, and URLs.
+
+### Pipeline Outputs
+
+- Artifacts archived from `reports/monitoring/**`
+- Per-run logs for each check
+- Markdown summary report with PASS/FAIL status
+
+### Run the Wrapper Manually
+
+```bash
+chmod +x scripts/run-monitoring-checks.sh
+export GITHUB_TOKEN="<token-with-repo-read-access>"
+
+# Run both checks (GitHub config + admin instances)
+scripts/run-monitoring-checks.sh \
+  --mode both \
+  --github-owner gbif \
+  --github-repo engineering \
+  --github-ref main \
+  --envs dev,test,prod \
+  --admin-url http://ws.gbif.org \
+  --policy-file scripts/policy.json
+
+# Run only GitHub config policy check
+scripts/run-monitoring-checks.sh \
+  --mode github \
+  --github-owner gbif \
+  --github-repo engineering
+```
