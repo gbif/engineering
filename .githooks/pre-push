@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ZERO_SHA="0000000000000000000000000000000000000000"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CHECKER="$REPO_ROOT/scripts/check-commit-messages.sh"
+
+if [ ! -x "$CHECKER" ]; then
+  echo "Missing executable checker: $CHECKER" >&2
+  echo "Run: chmod +x scripts/check-commit-messages.sh" >&2
+  exit 2
+fi
+
+FAILED=0
+
+# stdin format: <local ref> <local sha> <remote ref> <remote sha>
+while IFS=' ' read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+  [ -z "$LOCAL_SHA" ] && continue
+
+  # Deletion push, no commit content to validate.
+  if [ "$LOCAL_SHA" = "$ZERO_SHA" ]; then
+    continue
+  fi
+
+  echo "Checking pushed commits for $LOCAL_REF -> $REMOTE_REF"
+
+  BASE_SHA="$REMOTE_SHA"
+  if [ "$BASE_SHA" = "$ZERO_SHA" ]; then
+    BASE_SHA="$ZERO_SHA"
+  fi
+
+  if ! "$CHECKER" --base-sha "$BASE_SHA" --head-sha "$LOCAL_SHA"; then
+    FAILED=1
+  fi
+done
+
+if [ "$FAILED" -eq 1 ]; then
+  echo ""
+  echo "Push blocked by local commit-message policy."
+  echo "Fix commits and push again."
+  exit 1
+fi
+
+exit 0
+

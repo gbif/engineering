@@ -16,63 +16,7 @@ jobs:
 
       - name: Check commit messages
         run: |
-          MIN_LENGTH=20
-          ISSUE_PATTERN="(#[0-9]+|https://github.com/.*/issues/[0-9]+)"
-          FAILED=0
-
-          # On push, github provides before/after SHAs
-          BASE_SHA="${{ github.event.before }}"
-          HEAD_SHA="${{ github.event.after }}"
-
-          # Handle first push to a new branch (before SHA is all zeros)
-          if [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            COMMITS=$(git log ${HEAD_SHA} -1 --format="%H")
-          else
-            COMMITS=$(git log ${BASE_SHA}..${HEAD_SHA} --format="%H")
-          fi
-
-          if [ -z "$COMMITS" ]; then
-            echo "No commits to check"
-            exit 0
-          fi
-
-          for COMMIT in $COMMITS; do
-            MSG=$(git log --format=%B -n 1 $COMMIT | tr -d '\r')
-            SHORT=$(echo "$MSG" | head -1)
-
-            echo "-----------------------------"
-            echo "Checking: $SHORT"
-
-            # Skip merge commits
-            if echo "$SHORT" | grep -qE "^Merge (pull request|branch)"; then
-              echo "⏭️  Skipping merge commit"
-              continue
-            fi
-
-            # Check minimum length
-            if [ ${#SHORT} -lt $MIN_LENGTH ]; then
-              echo "❌ Too short: ${#SHORT} chars (min $MIN_LENGTH)"
-              FAILED=1
-            else
-              echo "✅ Length OK: ${#SHORT} chars"
-            fi
-
-            # Check issue reference
-            if ! echo "$MSG" | grep -qE "$ISSUE_PATTERN"; then
-              echo "❌ No issue reference found (expected #123)"
-              FAILED=1
-            else
-              echo "✅ Issue reference found"
-            fi
-          done
-
-          echo "-----------------------------"
-          if [ $FAILED -eq 1 ]; then
-            echo ""
-            echo "💡 Commit messages must:"
-            echo "   - Be at least $MIN_LENGTH characters"
-            echo "   - Reference a GitHub issue (#123)"
-            exit 1
-          fi
-
-          echo "✅ All commit messages are valid"
+          chmod +x scripts/check-commit-messages.sh
+          scripts/check-commit-messages.sh \
+            --base-sha "${{ github.event.before }}" \
+            --head-sha "${{ github.event.after }}"

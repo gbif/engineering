@@ -348,6 +348,16 @@ Test specific week assignments:
 python scripts/rotation-manager.py --dry-run --week 10
 ```
 
+Enable local push-time commit message checks:
+```bash
+bash scripts/install-git-hooks.sh
+```
+
+Test commit-message checks manually:
+```bash
+scripts/check-commit-messages.sh --range "HEAD~5..HEAD"
+```
+
 Validate WS versions by environment policy:
 ```bash
 export GITHUB_TOKEN="<token-with-repo-read-access>"
