@@ -19,7 +19,7 @@ pipeline {
     string(name: 'ENVS', defaultValue: 'dev,test,prod,lab', description: 'Comma-separated environments to validate')
     string(name: 'ADMIN_URL', defaultValue: 'http://ws.gbif.org', description: 'WS admin URL for /instances check')
     string(name: 'POLICY_FILE', defaultValue: 'scripts/policy.json', description: 'Local policy file path')
-    string(name: 'GITHUB_TOKEN_CREDENTIALS_ID', defaultValue: 'github-token', description: 'Jenkins Secret Text credentials ID for GITHUB_TOKEN')
+    string(name: 'GITHUB_TOKEN_CREDENTIALS_ID', defaultValue: '', description: 'Optional Jenkins Secret Text credentials ID for GITHUB_TOKEN')
   }
 
   environment {
@@ -63,7 +63,12 @@ scripts/run-monitoring-checks.sh \
 '''
 
           if (params.MODE == 'github' || params.MODE == 'both') {
-            withCredentials([string(credentialsId: params.GITHUB_TOKEN_CREDENTIALS_ID, variable: 'GITHUB_TOKEN')]) {
+            if (params.GITHUB_TOKEN_CREDENTIALS_ID?.trim()) {
+              withCredentials([string(credentialsId: params.GITHUB_TOKEN_CREDENTIALS_ID.trim(), variable: 'GITHUB_TOKEN')]) {
+                sh runCmd
+              }
+            } else {
+              echo 'GITHUB_TOKEN_CREDENTIALS_ID is empty; using existing GITHUB_TOKEN environment variable if present.'
               sh runCmd
             }
           } else {
